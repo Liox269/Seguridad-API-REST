@@ -46,6 +46,12 @@ const users = [
     username: 'vendedor',
     passwordHash: bcrypt.hashSync('Venta123!', 10),
     rol: 'usuario'
+  },
+  {
+    id: 3,
+    username: 'supervisor',
+    passwordHash: bcrypt.hashSync('Supervisor123!', 10),
+    rol: 'supervisor'
   }
 ];
 
@@ -117,7 +123,24 @@ app.post('/api/login',
     res.json({ token });
   }
 );
+app.get('/api/productos/:id',
+  autenticar,
+  param('id').isInt({ min: 1 }).withMessage('id inválido'),
+  validar,
+  (req, res) => {
+    const producto = productos.find(
+      p => p.id === Number(req.params.id)
+    );
 
+    if (!producto) {
+      return res.status(404).json({
+        error: 'Producto no encontrado'
+      });
+    }
+
+    res.json(producto);
+  }
+);
 // Listar productos
 app.get('/api/productos',
   autenticar,
@@ -127,7 +150,7 @@ app.get('/api/productos',
 // Crear productos
 app.post('/api/productos',
   autenticar,
-  soloRol('admin'),
+  soloRol('admin', 'supervisor'),
   body('nombre').isString().trim().isLength({ min: 2, max: 50 })
     .withMessage('nombre debe tener de 2 a 50 caracteres'),
   body('precio').isFloat({ gt: 0 })
